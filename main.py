@@ -122,8 +122,8 @@ class App(ctk.CTk):
     def show_dashboard(self):
         self.clear()
         cfg = load_config_data()
-        self.institution = cfg.get("institution", "FERMON")
-        self.title(f"FERMON - Management: {self.institution}")
+        self.institution = cfg.get("institution", "FERMAN")
+        self.title(f"FERMAN - Management: {self.institution}")
 
         # Sidebar
         self.sidebar = ctk.CTkFrame(self, width=220, corner_radius=0)

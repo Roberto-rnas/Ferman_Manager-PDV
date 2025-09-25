@@ -4,13 +4,16 @@ from pathlib import Path
 import hashlib
 from datetime import datetime
 
-BASE = Path.cwd()
-DB_DIR = BASE / "db"
-DB_DIR.mkdir(exist_ok=True)
+# BASE = Path.cwd()
+# DB_DIR = BASE / "db"
+# DB_DIR.mkdir(exist_ok=True)
 
-DB_USERS = DB_DIR / "users.xlsx"
-DB_STOCK = DB_DIR / "stock.xlsx"
-DB_SALES = DB_DIR / "sales.xlsx"
+
+# Caminho correto: dentro da pasta Fermon
+BASE_DIR = Path(__file__).resolve().parent.parent  # Sobe 2 níveis até a raiz do projeto
+DB_USERS = BASE_DIR / "db" / "users.xlsx"
+DB_SALES = BASE_DIR / "db" / "sales.xlsx"
+DB_STOCK = BASE_DIR / "db" / "stock.xlsx"
 
 # Ensure default files with headers
 def _ensure_file(path: Path, columns):
@@ -84,14 +87,14 @@ def save_items(df, path: Path = DB_STOCK):
 
 # ----- Sales -----
 def load_sales(path: Path = DB_SALES):
-    _ensure_file(path, ["data", "usuario", "produto", "quantidade", "preco", "tipo_pagamento"])
+    _ensure_file(path, ["data", "usuario", "tipo_pagamento", "produto", "quantidade", "preco"])
     df = pd.read_excel(path)
     return df
 
 def save_sales(df, path: Path = DB_SALES):
     df.to_excel(path, index=False)
 
-def append_sale(usuario, produto, quantidade, preco, tipo_pagamento, valor_entregue, path: Path = DB_SALES):
+def append_sale(data, usuario, tipo_pagamento, produto, quantidade, preco, valor_entregue, path: Path = DB_SALES):
     """
     Adiciona uma nova venda com cabeçalho padronizado.
     Mantém compatibilidade com arquivos antigos (sem algumas colunas).
@@ -101,8 +104,8 @@ def append_sale(usuario, produto, quantidade, preco, tipo_pagamento, valor_entre
     total = quantidade * preco
 
     # carrega e garante todas as colunas novas
-    cols = ["data", "usuario", "produto", "quantidade", "preco",
-            "tipo_pagamento", "valor_entregue", "total"]
+    cols = ["data", "usuario", "tipo_pagamento", "produto", "quantidade",
+             "preco", "valor_entregue", "total"]
     _ensure_file(path, cols)
     df = pd.read_excel(path)
 
@@ -126,15 +129,15 @@ def append_sale(usuario, produto, quantidade, preco, tipo_pagamento, valor_entre
     df.to_excel(path, index=False)
 
 # ----- Configurações do App -----
-CONFIG_FILE = DB_DIR / "config.xlsx"
+CONFIG_FILE = BASE_DIR / "db" /"config.xlsx"
 
 # garante que exista o arquivo com colunas padrão
 def _ensure_config():
     if not CONFIG_FILE.exists():
         df = pd.DataFrame([{
             "banco": "Excel",       # Excel ou MySQL
-            "caminho_db": str(DB_DIR / "sales.xlsx"),
-            "instituicao": "FERMON",
+            "caminho_db": str(BASE_DIR / "db" / "sales.xlsx"),
+            "instituicao": "FERMAN",
             "impressora": ""
         }])
         df.to_excel(CONFIG_FILE, index=False)

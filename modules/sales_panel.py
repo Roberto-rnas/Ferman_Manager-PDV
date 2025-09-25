@@ -252,27 +252,48 @@ def build(parent, username=None, on_back=None):
         save_items(df_stock)
 
         sales_file = Path(DB_SALES)
-        df_sales = pd.DataFrame(carrinho)
-        df_sales['data'] = datetime.now()
-        df_sales['usuario'] = username
-        df_sales['tipo_pagamento'] = payment_type
-        df_sales['valor_entregue'] = valor_entregue
-        df_sales['total'] = sum(item['quantity']*item['price'] for item in carrinho)
+
+        # 🔹 PADRONIZAÇÃO: sempre salva com nomes fixos
+        registros = []
+        for item in carrinho:
+            registros.append({
+                "data": datetime.now(),
+                "usuario": username,
+                "tipo_pagamento": payment_type,
+                "produto": item["item"],      # ✅ padronizado
+                "quantidade": item["quantity"], # ✅ padronizado
+                "preco": item["price"],         # ✅ padronizado
+                "valor_entregue": valor_entregue,
+                "total": item["quantity"] * item["price"]
+            })
+
+        df_sales = pd.DataFrame(registros)
+
+        # Se já existe, concatena mantendo colunas corretas
         if sales_file.exists():
             df_exist = pd.read_excel(sales_file)
             df_sales = pd.concat([df_exist, df_sales], ignore_index=True)
+
+        # Grava sempre com as colunas fixas
+        df_sales = df_sales[
+            ["data","usuario","tipo_pagamento","produto","quantidade",
+            "preco","valor_entregue","total"]
+        ]
         df_sales.to_excel(sales_file, index=False)
 
         # Impressão automática
         if cfg.get("enable_receipt", True):
-            print_receipt(carrinho, username=username, payment_type=payment_type, valor_entregue=valor_entregue)
+            print_receipt(carrinho, username=username,
+                        payment_type=payment_type, valor_entregue=valor_entregue)
         if cfg.get("enable_ticket", True):
-            print_ticket(carrinho, username=username, payment_type=payment_type, valor_entregue=valor_entregue)
+            print_ticket(carrinho, username=username,
+                        payment_type=payment_type, valor_entregue=valor_entregue)
 
         carrinho.clear()
         atualizar_lista()
         atualizar_carrinho()
         messagebox.showinfo("Sucesso", "Venda finalizada!")
+
 
     atualizar_lista()
     atualizar_carrinho()

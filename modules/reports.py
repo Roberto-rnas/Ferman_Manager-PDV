@@ -41,6 +41,7 @@ def build(parent, on_back=None):
     chart_frame.pack(fill="both", expand=True, padx=6, pady=6)
 
     fig, ax = plt.subplots(figsize=(7, 3))
+
     canvas = FigureCanvasTkAgg(fig, master=chart_frame)
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
@@ -62,10 +63,31 @@ def build(parent, on_back=None):
 
         # Lê sempre TODO o banco (para exportação completa)
         df_full = pd.read_excel(DB_SALES)
+
         if df_full.empty:
             txt.insert("end", "Nenhuma venda registrada.\n")
             canvas.draw()
             return
+
+        # --- Padronizar colunas para compatibilidade ---
+        col_mapping = {
+            "item": "produto",
+            "Item": "produto",
+            "description": "produto",
+            "produto": "produto",
+            "quantity": "quantidade",
+            "Quantity": "quantidade",
+            "Qtd": "quantidade",
+            "qtd": "quantidade",
+            "price": "preco",
+            "Price": "preco",
+            "valor_entregue": "valor_entregue",
+            "total": "total",
+            "tipo_pagamento": "tipo_pagamento",
+            "usuario": "usuario",
+            "data": "data"
+        }
+        df_full.rename(columns=lambda x: col_mapping.get(x, x), inplace=True)
 
         # Filtro de período apenas para análise
         df_full["data"] = pd.to_datetime(df_full["data"], dayfirst=True, errors="coerce")
@@ -95,15 +117,41 @@ def build(parent, on_back=None):
         total = grouped["receita"].sum()
         txt.insert("end", f"\nTotal Geral: R$ {total:.2f}\n")
 
-        ax.bar(grouped["produto"].astype(str), grouped["receita"])
-        ax.set_title("Receita por Produto")
-        ax.tick_params(axis="x", rotation=45)
+        # Gráfico
+        # Cor do frame (fundo do scroll)
+        frame_bg = scroll.cget("fg_color")  # pega a cor real do CTkScrollableFrame
+
+        # Tornar fundo do gráfico transparente
+        fig.patch.set_alpha(0)      # fundo da figura
+        ax.set_facecolor("none")    # fundo do eixo transparente
+
+        # Gráfico
+        # Identifica o modo Dark ou Light
+        mode = ctk.get_appearance_mode()
+        if mode == "Dark":
+            bg_color   = "#FF8C00" # Laranja forte
+            bar_color  = "#1E90FF"  # Azul Dodger
+            text_color = "white"
+            
+        else:
+            bg_color   = "#1E90FF"  # Azul claro
+            bar_color  = "#FF8C00"  # Laranja forte
+            text_color = "black"
+            
+
+        # Gráfico
+        fig.patch.set_facecolor(bg_color)
+        ax.set_facecolor(bg_color)
+        ax.bar(grouped["produto"].astype(str), grouped["receita"], color=bar_color)
+        ax.set_title("Receita por Produto", color=text_color)
+
         fig.tight_layout()
         canvas.draw()
 
         # Guardar para exportação
         result._last_df = df_filtered       # filtrado (se precisar no futuro)
         result._full_df = df_full           # COMPLETO (exportar todos os campos)
+
 
     def export_xlsx():
         """
