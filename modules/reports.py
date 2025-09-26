@@ -45,6 +45,10 @@ def build(parent, on_back=None):
     canvas = FigureCanvasTkAgg(fig, master=chart_frame)
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
+    # Guardar canvas/figura para liberar depois
+    scroll._report_canvas = canvas
+    scroll._report_fig = fig
+
     def gerar():
         """
         Gera o relatório na tela e gráfico.
@@ -178,3 +182,22 @@ def build(parent, on_back=None):
     ctk.CTkButton(btns, text="Exportar Excel (Completo)", command=export_xlsx).pack(side="left", padx=6)
     if on_back:
         ctk.CTkButton(btns, text="Voltar", command=on_back).pack(side="left", padx=6)
+
+            # Função de limpeza para quando clicar em voltar
+    def cleanup():
+        try:
+            # fecha a figura do matplotlib para liberar recursos
+            if hasattr(scroll, "_report_fig"):
+                plt.close(scroll._report_fig)
+        except Exception:
+            pass
+
+    if on_back:
+        orig_on_back = on_back
+        def wrapped_back():
+            cleanup()
+            orig_on_back()
+        # substitui o botão Voltar
+        for btn in btns.winfo_children():
+            if btn.cget("text") == "Voltar":
+                btn.configure(command=wrapped_back)

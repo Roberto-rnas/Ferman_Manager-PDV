@@ -13,6 +13,9 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        # --- NOVO: lista para guardar todos os after() ---
+        self.after_ids = []
+
         cfg = load_config_data()
         self.institution = cfg.get("institution", "FERMAN")
         self.title(f"FERMAN - Management: {self.institution}")
@@ -64,12 +67,12 @@ class App(ctk.CTk):
         logo_path = r"C:\Users\rnascimento\Documents\Python\Fermon\assets\watermark.png"
         if Path(logo_path).exists():
             try:
-                logo_img = ctk.CTkImage(
+                self.logo_img = ctk.CTkImage(
                     light_image=Image.open(logo_path),
                     dark_image=Image.open(logo_path),
                     size=(300, 300)
                 )
-                logo_label = ctk.CTkLabel(self.login_frame, image=logo_img, text="")
+                logo_label = ctk.CTkLabel(self.login_frame, image=self.logo_img, text="")
                 logo_label.pack(pady=(0, 20))  # espaço abaixo da logo
             except Exception as e:
                 print("Erro ao carregar logo:", e)
@@ -173,9 +176,9 @@ class App(ctk.CTk):
             logo_path = r"C:\Users\rnascimento\Documents\Python\Fermon\assets\fermon_logo.png"
             if Path(logo_path).exists():
                 try:
-                    logo_image = ctk.CTkImage(light_image=Image.open(logo_path),
+                    self.welcome_logo_img = ctk.CTkImage(light_image=Image.open(logo_path),
                                               dark_image=Image.open(logo_path), size=(420, 420))
-                    ctk.CTkLabel(welcome_frame, image=logo_image, text="").pack(pady=10)
+                    ctk.CTkLabel(welcome_frame, image=self.welcome_logo_img, text="").pack(pady=10)
                 except Exception as e:
                     print("Erro ao carregar logo:", e)
             else:
@@ -202,6 +205,31 @@ class App(ctk.CTk):
             if w is not getattr(self, "bg_label", None):
                 w.destroy()
 
+    def on_closing(self):
+        # Tenta cancelar todos os afters internos do Tk antes de destruir
+        try:
+            # Cancela qualquer after_id armazenado em atributos conhecidos
+            if hasattr(self, "_after_id"):
+                self.after_cancel(self._after_id)
+        except Exception:
+            pass
+
+        # Cancela afters globais pendentes (CustomTkinter cria alguns internamente)
+        try:
+            for after_id in list(self.tk.call("after", "info")):
+                try:
+                    self.after_cancel(after_id)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # Garante que só destrói se a janela ainda existir
+        if self.winfo_exists():
+            self.destroy()
+
 
 if __name__ == "__main__":
-    App().mainloop()
+    app = App()
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)  # <- captura fechamento da janela
+    app.mainloop()
