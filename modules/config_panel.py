@@ -1,10 +1,10 @@
 # modules/config_panel.py
 import customtkinter as ctk
 from tkinter import messagebox
-from modules.utils import load_config as load_config_data, save_config as save_config_data
+from modules.utils import load_config as load_config_data, save_config as save_config_data, reset_stock, reset_sales
 from modules.printer_utils import list_printers
 
-def build(parent, on_back=None):
+def build(parent, username_role=None, on_back=None):
     for w in parent.winfo_children():
         w.destroy()
 
@@ -12,6 +12,17 @@ def build(parent, on_back=None):
     scroll.pack(fill="both", expand=True, padx=10, pady=10)
 
     ctk.CTkLabel(scroll, text="Configurações do Sistema", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=8)
+
+        # Cria um frame dentro do scroll para os botões de reset
+    reset_frame = ctk.CTkFrame(scroll)
+    reset_frame.pack(fill="x", pady=10, padx=6)
+
+    # --- Botões de Reset (apenas para Admin) ---
+    # Botões de reset apenas para admin
+    if username_role == "admin":
+        ctk.CTkButton(reset_frame, text="Resetar Estoque", command=reset_stock).pack(side="left", padx=10, pady=5)
+        ctk.CTkButton(reset_frame, text="Resetar Vendas", command=reset_sales).pack(side="left", padx=10, pady=5)
+
 
     cfg = load_config_data()
 
@@ -110,6 +121,7 @@ def build(parent, on_back=None):
     ctk.CTkButton(btn_frame, text="Salvar", command=save_config).pack(side="left", padx=8)
     if on_back:
         ctk.CTkButton(btn_frame, text="Voltar", fg_color="gray25", command=on_back).pack(side="left", padx=8)
+
 
 # Função utilitária
 def load_config():

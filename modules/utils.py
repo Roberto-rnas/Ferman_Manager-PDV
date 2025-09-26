@@ -157,3 +157,18 @@ def save_config(cfg: dict):
     """Salva as configurações fornecidas"""
     df = pd.DataFrame([cfg])
     df.to_excel(CONFIG_FILE, index=False)
+
+def reset_stock():
+    """Limpa o banco de dados de estoque"""
+    stock_file = Path(DB_STOCK)
+    if stock_file.exists():
+        # cria DataFrame vazio com colunas padrão
+        df = pd.DataFrame(columns=["description", "balance", "cost", "price"])
+        df.to_excel(stock_file, index=False)
+
+def reset_sales():
+    """Limpa o banco de dados de vendas"""
+    sales_file = Path(DB_SALES)
+    if sales_file.exists():
+        df = pd.DataFrame(columns=["data", "usuario", "tipo_pagamento", "produto", "quantidade", "preco", "valor_entregue", "total"])
+        df.to_excel(sales_file, index=False)

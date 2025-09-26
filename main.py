@@ -190,7 +190,7 @@ class App(ctk.CTk):
         elif page == "reports":
             reports.build(self.content_frame, on_back=self.show_dashboard)
         elif page == "config":
-            config_panel.build(self.content_frame, on_back=self.show_dashboard)
+            config_panel.build(self.content_frame, username_role=self.role, on_back=self.show_dashboard)
 
     def logout(self):
         self.role = None
